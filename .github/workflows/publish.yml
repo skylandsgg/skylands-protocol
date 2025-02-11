@@ -1,48 +1,32 @@
-name: Publish to Nexus Repository
+name: Deploy to Nexus Repository
 
 on:
-  push:
-    branches:
-      - main
   release:
-    types:
-      - published
+    types: [published]
 
 jobs:
-  publish:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v2
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v2
         with:
-          distribution: 'temurin'
+          distribution: 'adopt'
           java-version: '21'
 
-      - name: Setup Gradle
-        uses: gradle/gradle-build-action@v3
+      - name: Set up Gradle
+        uses: gradle/gradle-build-action@v2
 
-      - name: Decode and import GPG key (if signing is enabled)
-        if: env.GPG_PRIVATE_KEY != ''
+      - name: Configure Gradle
         run: |
-          echo "$GPG_PRIVATE_KEY" | base64 --decode | gpg --import
-        env:
-          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          mkdir -p ~/.gradle
+          echo "nexusUsername=${{ secrets.NEXUS_USERNAME }}" >> ~/.gradle/gradle.properties
+          echo "nexusPassword=${{ secrets.NEXUS_PASSWORD }}" >> ~/.gradle/gradle.properties
 
-      - name: Determine Nexus Repository
-        id: repo
-        run: |
-          if [[ "${{ github.event_name }}" == "release" ]]; then
-            echo "REPO_URL=https://repo.negative.games/releases/" >> $GITHUB_ENV
-          else
-            echo "REPO_URL=https://repo.negative.games/snapshots/" >> $GITHUB_ENV
-          fi
-
-      - name: Publish to Nexus
-        run: ./gradlew publish
-        env:
-          ORG_GRADLE_PROJECT_nexusUsername: ${{ secrets.NEXUS_USERNAME }}
-          ORG_GRADLE_PROJECT_nexusPassword: ${{ secrets.NEXUS_PASSWORD }}
+      - name: Build and deploy release
+        if: github.event_name == 'release'
+        run: ./gradlew publish -PnexusUrl=https://repo.negative.games/repository/skylands -PnexusUsername=${{ secrets.NEXUS_USERNAME }} -PnexusPassword=${{ secrets.NEXUS_PASSWORD }}
