@@ -1,0 +1,90 @@
+plugins {
+    id 'java'
+    id "io.github.goooler.shadow" version "8.1.7"
+    id 'maven-publish'
+}
+
+def id = "SkylandsProtocol"
+def group = 'gg.skylands.protocol'
+def ver = '1.0.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+
+    // https://mvnrepository.com/artifact/redis.clients/jedis
+    implementation('redis.clients:jedis:5.2.0')
+
+    // Lombok
+    compileOnly("org.projectlombok:lombok:1.18.32")
+    annotationProcessor("org.projectlombok:lombok:1.18.32")
+
+    // Jetbrains Annotations
+    compileOnly("org.jetbrains:annotations:22.0.0")
+}
+
+def targetJavaVersion = 21
+java {
+    def javaVersion = JavaVersion.toVersion(targetJavaVersion)
+    sourceCompatibility = javaVersion
+    targetCompatibility = javaVersion
+    if (JavaVersion.current() < javaVersion) {
+        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+
+    if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
+        options.release.set(targetJavaVersion)
+    }
+}
+
+// Allow to build sources jar
+tasks.register('sourcesJar', Jar) {
+    dependsOn classes
+    archiveClassifier.set("sources")
+    from sourceSets.main.allSource
+}
+
+// Artifact Information
+artifacts {
+    archives sourcesJar
+}
+
+tasks {
+    build {
+        dependsOn(shadowJar)
+    }
+}
+
+publishing {
+    repositories {
+        maven {
+            name = "nexus"
+            url = System.getenv("REPO_URL") ?: "https://repo.negative.games/snapshots/"
+            credentials {
+                username = System.getenv("ORG_GRADLE_PROJECT_nexusUsername")
+                password = System.getenv("ORG_GRADLE_PROJECT_nexusPassword")
+            }
+        }
+    }
+
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            groupId = 'gg.skylands.protocol'
+            artifactId = 'skylands-protocol'
+            version = ver
+        }
+    }
+}
+
+shadowJar {
+    archiveBaseName.set("${id}")
+    archiveClassifier.set("")
+    archiveVersion.set("")
+}
