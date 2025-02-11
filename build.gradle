@@ -79,12 +79,20 @@ publishing {
             groupId = 'gg.skylands.protocol'
             artifactId = 'skylands-protocol'
             version = ver
+
+            artifact(tasks.shadowJar) {
+                classifier = 'all'
+            }
+
+            artifact(tasks.sourcesJar) {
+                classifier = 'sources'
+            }
         }
     }
 }
 
 shadowJar {
     archiveBaseName.set("${id}")
-    archiveClassifier.set("")
+    archiveClassifier.set("all")
     archiveVersion.set("")
 }
