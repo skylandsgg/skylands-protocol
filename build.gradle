@@ -65,10 +65,10 @@ publishing {
     repositories {
         maven {
             name = "nexus"
-            url = System.getenv("REPO_URL") ?: "https://repo.negative.games/snapshots/"
+            url = System.getenv("REPO_URL") ?: "https://repo.negative.games/repository/skylands/"
             credentials {
-                username = System.getenv("ORG_GRADLE_PROJECT_nexusUsername")
-                password = System.getenv("ORG_GRADLE_PROJECT_nexusPassword")
+                username = project.findProperty("nexusUsername") ?: ""
+                password = project.findProperty("nexusPassword") ?: ""
             }
         }
     }
