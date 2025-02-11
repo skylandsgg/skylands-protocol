@@ -1,6 +1,5 @@
 plugins {
     id 'java'
-    id "io.github.goooler.shadow" version "8.1.7"
     id 'maven-publish'
 }
 
@@ -55,12 +54,6 @@ artifacts {
     archives sourcesJar
 }
 
-tasks {
-    build {
-        dependsOn(shadowJar)
-    }
-}
-
 publishing {
     repositories {
         maven {
@@ -80,19 +73,9 @@ publishing {
             artifactId = 'skylands-protocol'
             version = ver
 
-            artifact(tasks.shadowJar) {
-                classifier = 'all'
-            }
-
             artifact(tasks.sourcesJar) {
                 classifier = 'sources'
             }
         }
     }
-}
-
-shadowJar {
-    archiveBaseName.set("${id}")
-    archiveClassifier.set("all")
-    archiveVersion.set("")
 }
