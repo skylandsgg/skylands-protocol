@@ -33,14 +33,14 @@ public class SkylandsRedis {
             // Send a ping to the Redis server
             long start = System.currentTimeMillis();
             runCommand(jedis -> {
-                System.out.printf("Redis ping: %s (%s ms)%n", jedis.ping(), System.currentTimeMillis() - start);
+                System.out.printf("[skylands-protocol] Redis ping: %s (%s ms)%n", jedis.ping(), System.currentTimeMillis() - start);
                 return null;
             });
 
         } catch (Exception e) {
             state = false;
 
-            System.err.println("Could not connect to Redis database! Some features may not work.");
+            System.err.println("[skylands-protocol] Could not connect to Redis database! Some features may not work.");
         }
     }
 
