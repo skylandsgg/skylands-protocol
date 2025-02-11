@@ -6,7 +6,7 @@ plugins {
 
 def id = "SkylandsProtocol"
 def group = 'gg.skylands.protocol'
-def ver = '1.0.0-SNAPSHOT'
+def ver = '1.0.0'
 
 repositories {
     mavenCentral()
