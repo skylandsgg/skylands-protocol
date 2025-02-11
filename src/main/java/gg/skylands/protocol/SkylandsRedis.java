@@ -20,6 +20,10 @@ public class SkylandsRedis {
     private JedisPool pool;
 
     public SkylandsRedis(@NotNull String host, int port, @NotNull String password) {
+        if (instance != null) throw new IllegalStateException("SkylandsRedis instance is already initialized!");
+
+        instance = this;
+
         this.threadPool = Executors.newCachedThreadPool();
 
         try {
