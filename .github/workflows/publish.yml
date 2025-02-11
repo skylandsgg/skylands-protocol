@@ -1,9 +1,6 @@
 name: Deploy to Nexus Repository
 
 on:
-  push:
-    branches:
-      - main
   release:
     types: [published]
 
@@ -24,14 +21,13 @@ jobs:
       - name: Set up Gradle
         uses: gradle/gradle-build-action@v2
 
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
       - name: Configure Gradle
         run: |
           echo "nexusUsername=${{ secrets.NEXUS_USERNAME }}" >> ~/.gradle/gradle.properties
           echo "nexusPassword=${{ secrets.NEXUS_PASSWORD }}" >> ~/.gradle/gradle.properties
-
-      - name: Build and deploy snapshot
-        if: github.event_name == 'push'
-        run: ./gradlew publish -PnexusUrl=https://repo.negative.games/repository/skylands
 
       - name: Build and deploy release
         if: github.event_name == 'release'
