@@ -1,6 +1,7 @@
 package gg.skylands.protocol;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
@@ -19,7 +20,7 @@ public class SkylandsRedis {
 
     private JedisPool pool;
 
-    public SkylandsRedis(@NotNull String host, int port, @NotNull String password) {
+    public SkylandsRedis(@NotNull String host, int port, @Nullable String user, @NotNull String password) {
         if (instance != null) throw new IllegalStateException("SkylandsRedis instance is already initialized!");
 
         instance = this;
@@ -28,7 +29,7 @@ public class SkylandsRedis {
 
         try {
 
-            this.pool = new JedisPool(host, port, null, password);
+            this.pool = new JedisPool(host, port, (user == null || user.isBlank() ? null : user), password);
 
             // Send a ping to the Redis server
             long start = System.currentTimeMillis();
