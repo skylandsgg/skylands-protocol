@@ -14,21 +14,35 @@ public class SkylandsRedis {
     public static String PREFIX = "Skylands.";
 
     private static SkylandsRedis instance;
-    private static boolean state = false;
 
     private final ExecutorService threadPool;
 
-    private JedisPool pool;
+    private final JedisPool pool;
 
-    public SkylandsRedis(@NotNull String host, int port, @Nullable String user, @NotNull String password) {
+    /**
+     * Connect to Redis using the credentials from the REDIS_CREDS environment variable.
+     * @throws IllegalStateException If the instance is already initialized, or if the REDIS_CREDS environment variable is not set or if the credentials are invalid.
+     */
+    public SkylandsRedis() throws IllegalStateException {
         if (instance != null) throw new IllegalStateException("SkylandsRedis instance is already initialized!");
 
         instance = this;
 
+        String creds = System.getenv("REDIS_CREDS");
+        if (creds == null || creds.isBlank()) throw new IllegalStateException("REDIS_CREDS environment variable is not set!");
+
+        String[] split = creds.split(":");
+        boolean hasUser = split.length == 4;
+
+        String host = split[0];
+        int port = Integer.parseInt(split[1]);
+
+        String user = hasUser ? split[2] : null;
+        String password = hasUser ? split[3] : split[2];
+
         this.threadPool = Executors.newCachedThreadPool();
 
         try {
-
             this.pool = new JedisPool(host, port, (user == null || user.isBlank() ? null : user), password);
 
             // Send a ping to the Redis server
@@ -37,11 +51,37 @@ public class SkylandsRedis {
                 System.out.printf("[skylands-protocol] Redis ping: %s (%s ms)%n", jedis.ping(), System.currentTimeMillis() - start);
                 return null;
             });
-
         } catch (Exception e) {
-            state = false;
+            throw new IllegalStateException("Failed to initialize SkylandsRedis!", e);
+        }
+    }
 
-            System.err.println("[skylands-protocol] Could not connect to Redis database! Some features may not work.");
+    /**
+     * Connect to Redis using the given credentials.
+     * @param host Host of the Redis server
+     * @param port Port of the Redis server
+     * @param user User of the Redis server
+     * @param password Password of the Redis server
+     * @throws IllegalStateException If the instance is already initialized, or if the credentials are invalid.
+     */
+    public SkylandsRedis(@NotNull String host, int port, @Nullable String user, @NotNull String password) throws IllegalStateException {
+        if (instance != null) throw new IllegalStateException("SkylandsRedis instance is already initialized!");
+
+        instance = this;
+
+        this.threadPool = Executors.newCachedThreadPool();
+
+        try {
+            this.pool = new JedisPool(host, port, (user == null || user.isBlank() ? null : user), password);
+
+            // Send a ping to the Redis server
+            long start = System.currentTimeMillis();
+            runCommand(jedis -> {
+                System.out.printf("[skylands-protocol] Redis ping: %s (%s ms)%n", jedis.ping(), System.currentTimeMillis() - start);
+                return null;
+            });
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to initialize SkylandsRedis!", e);
         }
     }
 
@@ -77,19 +117,9 @@ public class SkylandsRedis {
     }
 
     /**
-     * Returns true if Redis is enabled, false otherwise.
-     * @return  true if Redis is enabled, false otherwise.
-     */
-    private boolean checkState() {
-        return state;
-    }
-
-    /**
      * Disconnect from the Redis database.
      */
     public void close() {
-        if (!checkState()) return;
-
         pool.close();
     }
 }
